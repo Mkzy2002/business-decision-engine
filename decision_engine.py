@@ -1,19 +1,19 @@
+import argparse
+
+
 def calculate_decision(revenue, expenses, cash, growth_rate, customers):
     monthly_profit = revenue - expenses
 
-    # Profit margin
     if revenue > 0:
         profit_margin = (monthly_profit / revenue) * 100
     else:
         profit_margin = 0
 
-    # Cash runway
     if expenses > 0:
         runway = cash / expenses
     else:
         runway = float("inf")
 
-    # Health score
     score = 0
 
     # Profitability: 25 points
@@ -74,35 +74,34 @@ def calculate_decision(revenue, expenses, cash, growth_rate, customers):
         recommendation = "CUT"
         risk = "CRITICAL"
 
-    # Reasons
     reasons = []
 
     if runway < 1:
-        reasons.append("⚠ Extremely low cash runway")
+        reasons.append("WARNING: Extremely low cash runway")
     elif runway < 3:
-        reasons.append("⚠ Low cash runway")
+        reasons.append("WARNING: Low cash runway")
     elif runway >= 6:
-        reasons.append("✓ Strong cash runway")
+        reasons.append("OK: Strong cash runway")
 
     if monthly_profit > 0:
-        reasons.append("✓ Business is profitable")
+        reasons.append("OK: Business is profitable")
     else:
-        reasons.append("⚠ Business is losing money")
+        reasons.append("WARNING: Business is losing money")
 
     if profit_margin >= 30:
-        reasons.append("✓ Strong profit margin")
+        reasons.append("OK: Strong profit margin")
     elif profit_margin < 10:
-        reasons.append("⚠ Weak profit margin")
+        reasons.append("WARNING: Weak profit margin")
 
     if growth_rate >= 10:
-        reasons.append("✓ Healthy revenue growth")
+        reasons.append("OK: Healthy revenue growth")
     elif growth_rate <= 0:
-        reasons.append("⚠ Revenue is not growing")
+        reasons.append("WARNING: Revenue is not growing")
 
     if customers >= 50:
-        reasons.append("✓ Established customer base")
+        reasons.append("OK: Established customer base")
     elif customers < 10:
-        reasons.append("⚠ Small customer base")
+        reasons.append("WARNING: Small customer base")
 
     return {
         "profit": monthly_profit,
@@ -116,15 +115,43 @@ def calculate_decision(revenue, expenses, cash, growth_rate, customers):
 
 
 def main():
-    print("=" * 40)
-    print("      BUSINESS DECISION ENGINE")
-    print("=" * 40)
+    parser = argparse.ArgumentParser(
+        description="Evaluate business health and recommend an action."
+    )
 
-    revenue = float(input("Monthly revenue: $"))
-    expenses = float(input("Monthly expenses: $"))
-    cash = float(input("Cash available: $"))
-    growth_rate = float(input("Monthly growth rate (%): "))
-    customers = int(input("Number of customers: "))
+    parser.add_argument("--revenue", type=float)
+    parser.add_argument("--expenses", type=float)
+    parser.add_argument("--cash", type=float)
+    parser.add_argument("--growth", type=float)
+    parser.add_argument("--customers", type=int)
+
+    args = parser.parse_args()
+
+    # If CLI arguments are provided, use them.
+    if any(value is not None for value in vars(args).values()):
+        if None in vars(args).values():
+            parser.error(
+                "When using CLI arguments, provide all five: "
+                "--revenue --expenses --cash --growth --customers"
+            )
+
+        revenue = args.revenue
+        expenses = args.expenses
+        cash = args.cash
+        growth_rate = args.growth
+        customers = args.customers
+
+    # Otherwise use interactive mode.
+    else:
+        print("=" * 40)
+        print("      BUSINESS DECISION ENGINE")
+        print("=" * 40)
+
+        revenue = float(input("Monthly revenue: $"))
+        expenses = float(input("Monthly expenses: $"))
+        cash = float(input("Cash available: $"))
+        growth_rate = float(input("Monthly growth rate (%): "))
+        customers = int(input("Number of customers: "))
 
     result = calculate_decision(
         revenue,

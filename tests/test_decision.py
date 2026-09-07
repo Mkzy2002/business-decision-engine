@@ -38,3 +38,20 @@ def test_losing_business():
 
     assert result["profit"] == -5000
     assert result["recommendation"] == "PIVOT"
+
+
+def test_cli_arguments():
+    result = calculate_decision(
+        revenue=20000,
+        expenses=8000,
+        cash=2500,
+        growth_rate=8,
+        customers=50
+    )
+
+    assert result["profit"] == 12000
+    assert result["margin"] == 60
+    assert result["runway"] == 0.3125
+    assert result["score"] == 55
+    assert result["recommendation"] == "PIVOT"
+    assert result["risk"] == "CRITICAL"
