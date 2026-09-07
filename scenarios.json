@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Current",
+    "revenue": 20000,
+    "expenses": 8000,
+    "cash": 2500,
+    "growth": 8,
+    "customers": 50
+  },
+  {
+    "name": "Cut Expenses",
+    "revenue": 20000,
+    "expenses": 5000,
+    "cash": 2500,
+    "growth": 8,
+    "customers": 50
+  },
+  {
+    "name": "Increase Revenue",
+    "revenue": 30000,
+    "expenses": 8000,
+    "cash": 2500,
+    "growth": 15,
+    "customers": 50
+  }
+]

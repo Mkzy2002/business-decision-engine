@@ -73,3 +73,42 @@ def test_json_output_data():
     assert result["recommendation"] == "PIVOT"
     assert result["risk"] == "CRITICAL"
     assert isinstance(result["reasons"], list)
+
+
+def test_compare_scenarios():
+    from decision_engine import compare_scenarios
+
+    scenarios = [
+        {
+            "name": "Current",
+            "revenue": 20000,
+            "expenses": 8000,
+            "cash": 2500,
+            "growth": 8,
+            "customers": 50,
+        },
+        {
+            "name": "Cut Expenses",
+            "revenue": 20000,
+            "expenses": 5000,
+            "cash": 2500,
+            "growth": 8,
+            "customers": 50,
+        },
+        {
+            "name": "Increase Revenue",
+            "revenue": 30000,
+            "expenses": 8000,
+            "cash": 2500,
+            "growth": 15,
+            "customers": 50,
+        },
+    ]
+
+    results = compare_scenarios(scenarios)
+
+    assert len(results) == 3
+    assert results[0]["name"] == "Increase Revenue"
+    assert results[0]["score"] == 60
+    assert results[1]["score"] == 55
+    assert results[2]["score"] == 55

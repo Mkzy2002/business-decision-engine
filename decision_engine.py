@@ -115,6 +115,32 @@ def calculate_decision(revenue, expenses, cash, growth_rate, customers):
     }
 
 
+def compare_scenarios(scenarios):
+    results = []
+
+    for scenario in scenarios:
+        result = calculate_decision(
+            revenue=scenario["revenue"],
+            expenses=scenario["expenses"],
+            cash=scenario["cash"],
+            growth_rate=scenario["growth"],
+            customers=scenario["customers"],
+        )
+
+        results.append({
+            "name": scenario["name"],
+            **result,
+        })
+
+    ranked_results = sorted(
+        results,
+        key=lambda result: result["score"],
+        reverse=True
+    )
+
+    return ranked_results
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Evaluate business health and recommend an action."
@@ -125,6 +151,13 @@ def main():
     parser.add_argument("--cash", type=float)
     parser.add_argument("--growth", type=float)
     parser.add_argument("--customers", type=int)
+
+    parser.add_argument(
+        "--scenario-file",
+        type=str,
+        help="Compare business scenarios from a JSON file"
+    )
+
     parser.add_argument(
         "--json",
         action="store_true",
@@ -133,7 +166,39 @@ def main():
 
     args = parser.parse_args()
 
-    # If CLI business arguments are provided, use them.
+    if args.scenario_file:
+        with open(args.scenario_file, "r", encoding="utf-8") as file:
+            scenarios = json.load(file)
+
+        results = compare_scenarios(scenarios)
+
+        if args.json:
+            print(json.dumps(results, indent=2))
+            return
+
+        print()
+        print("=" * 50)
+        print("       BUSINESS SCENARIO COMPARISON")
+        print("=" * 50)
+
+        for index, result in enumerate(results, start=1):
+            print()
+            print(f"{index}. {result['name']}")
+            print(f"   Score:          {result['score']}/100")
+            print(f"   Recommendation: {result['recommendation']}")
+            print(f"   Risk:           {result['risk']}")
+            print(f"   Profit:         ${result['profit']:,.2f}")
+            print(f"   Margin:         {result['margin']:.1f}%")
+
+            if result["runway"] == float("inf"):
+                print("   Runway:         Unlimited")
+            else:
+                print(f"   Runway:         {result['runway']:.1f} months")
+
+        print()
+        print("=" * 50)
+        return
+
     business_values = [
         args.revenue,
         args.expenses,
@@ -155,7 +220,6 @@ def main():
         growth_rate = args.growth
         customers = args.customers
 
-    # Otherwise use interactive mode.
     else:
         print("=" * 40)
         print("      BUSINESS DECISION ENGINE")
@@ -175,7 +239,6 @@ def main():
         customers
     )
 
-    # JSON mode
     if args.json:
         output = {
             "profit": result["profit"],
@@ -190,7 +253,6 @@ def main():
         print(json.dumps(output, indent=2))
         return
 
-    # Normal output
     print()
     print("-" * 40)
 
