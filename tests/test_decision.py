@@ -55,3 +55,21 @@ def test_cli_arguments():
     assert result["score"] == 55
     assert result["recommendation"] == "PIVOT"
     assert result["risk"] == "CRITICAL"
+
+
+def test_json_output_data():
+    result = calculate_decision(
+        revenue=20000,
+        expenses=8000,
+        cash=2500,
+        growth_rate=8,
+        customers=50
+    )
+
+    assert result["profit"] == 12000
+    assert result["margin"] == 60
+    assert result["runway"] == 0.3125
+    assert result["score"] == 55
+    assert result["recommendation"] == "PIVOT"
+    assert result["risk"] == "CRITICAL"
+    assert isinstance(result["reasons"], list)

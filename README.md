@@ -1,4 +1,4 @@
-﻿# Business Decision Engine
+# Business Decision Engine
 
 A lightweight CLI tool that helps entrepreneurs evaluate business health and make clearer decisions using a few simple business metrics.
 
@@ -20,6 +20,8 @@ It calculates:
 - Business health score
 - Risk level
 - Recommended action
+
+It supports both human-readable output and JSON output for integration with other tools.
 
 ## Decision Framework
 
@@ -63,6 +65,37 @@ Example result:
     Recommendation:    PIVOT
     Risk level:        CRITICAL
 
+### JSON Mode
+
+Use `--json` to return the decision as machine-readable JSON:
+
+    python decision_engine.py --revenue 20000 --expenses 8000 --cash 2500 --growth 8 --customers 50 --json
+
+Example:
+
+    {
+      "profit": 12000.0,
+      "margin": 60.0,
+      "runway": 0.3125,
+      "score": 55,
+      "recommendation": "PIVOT",
+      "risk": "CRITICAL",
+      "reasons": [
+        "WARNING: Extremely low cash runway",
+        "OK: Business is profitable",
+        "OK: Strong profit margin",
+        "OK: Established customer base"
+      ]
+    }
+
+JSON output makes the engine easier to integrate with:
+
+- APIs
+- Web applications
+- AI agents
+- Automation tools
+- Other command-line programs
+
 ## Inputs
 
 | Argument | Description |
@@ -72,8 +105,9 @@ Example result:
 | --cash | Available cash |
 | --growth | Monthly revenue growth rate (%) |
 | --customers | Number of customers |
+| --json | Output the decision as JSON |
 
-All five CLI arguments are required when using CLI mode.
+All five business arguments are required when using CLI mode.
 
 ## How the Score Works
 
@@ -100,10 +134,11 @@ Current test coverage includes:
 - Low cash runway
 - Losing business
 - CLI-style decision calculation
+- JSON output data
 
 Current result:
 
-    4 passed
+    5 passed
 
 ## Project Structure
 

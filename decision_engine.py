@@ -1,4 +1,5 @@
 import argparse
+import json
 
 
 def calculate_decision(revenue, expenses, cash, growth_rate, customers):
@@ -124,12 +125,25 @@ def main():
     parser.add_argument("--cash", type=float)
     parser.add_argument("--growth", type=float)
     parser.add_argument("--customers", type=int)
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output the decision as JSON"
+    )
 
     args = parser.parse_args()
 
-    # If CLI arguments are provided, use them.
-    if any(value is not None for value in vars(args).values()):
-        if None in vars(args).values():
+    # If CLI business arguments are provided, use them.
+    business_values = [
+        args.revenue,
+        args.expenses,
+        args.cash,
+        args.growth,
+        args.customers,
+    ]
+
+    if any(value is not None for value in business_values):
+        if any(value is None for value in business_values):
             parser.error(
                 "When using CLI arguments, provide all five: "
                 "--revenue --expenses --cash --growth --customers"
@@ -161,6 +175,22 @@ def main():
         customers
     )
 
+    # JSON mode
+    if args.json:
+        output = {
+            "profit": result["profit"],
+            "margin": result["margin"],
+            "runway": result["runway"],
+            "score": result["score"],
+            "recommendation": result["recommendation"],
+            "risk": result["risk"],
+            "reasons": result["reasons"],
+        }
+
+        print(json.dumps(output, indent=2))
+        return
+
+    # Normal output
     print()
     print("-" * 40)
 
