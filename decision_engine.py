@@ -115,6 +115,61 @@ def calculate_decision(revenue, expenses, cash, growth_rate, customers):
     }
 
 
+def explain_decision(result):
+    strengths = []
+    concerns = []
+    actions = []
+
+    if result["profit"] > 0:
+        strengths.append("Business is profitable")
+    else:
+        concerns.append("Business is losing money")
+
+    if result["margin"] >= 30:
+        strengths.append("Strong profit margin")
+    elif result["margin"] < 10:
+        concerns.append("Weak profit margin")
+
+    if result["runway"] < 1:
+        concerns.append("Cash runway is critically low")
+        actions.append("Secure additional cash runway immediately")
+    elif result["runway"] < 3:
+        concerns.append("Cash runway is low")
+        actions.append("Improve cash runway before expanding")
+    elif result["runway"] >= 6:
+        strengths.append("Strong cash runway")
+
+    if result["score"] >= 75:
+        actions.append("Continue the current business direction")
+    elif result["recommendation"] == "HOLD":
+        actions.append("Hold the current direction and improve weak areas")
+    elif result["recommendation"] == "PIVOT":
+        actions.append("Test a different business approach before committing more resources")
+    elif result["recommendation"] == "CUT":
+        actions.append("Consider stopping or significantly reducing the current activity")
+
+    if result["margin"] >= 30:
+        strengths.append("Healthy unit economics")
+
+    if result["score"] < 50 and result["runway"] >= 3:
+        concerns.append("Overall business health is weak")
+
+    if not strengths:
+        strengths.append("No major strengths identified")
+
+    if not concerns:
+        concerns.append("No major concerns identified")
+
+    if not actions:
+        actions.append("Monitor business performance and reassess regularly")
+
+    return {
+        "strengths": strengths,
+        "concerns": concerns,
+        "actions": actions,
+    }
+
+
 def compare_scenarios(scenarios):
     results = []
 
@@ -127,9 +182,12 @@ def compare_scenarios(scenarios):
             customers=scenario["customers"],
         )
 
+        explanation = explain_decision(result)
+
         results.append({
             "name": scenario["name"],
             **result,
+            "explanation": explanation,
         })
 
     ranked_results = sorted(
@@ -195,6 +253,21 @@ def main():
             else:
                 print(f"   Runway:         {result['runway']:.1f} months")
 
+            print()
+            print("   WHY:")
+            for strength in result["explanation"]["strengths"]:
+                print(f"   + {strength}")
+
+            print()
+            print("   MAIN CONCERNS:")
+            for concern in result["explanation"]["concerns"]:
+                print(f"   ! {concern}")
+
+            print()
+            print("   ACTION:")
+            for action in result["explanation"]["actions"]:
+                print(f"   -> {action}")
+
         print()
         print("=" * 50)
         return
@@ -239,6 +312,8 @@ def main():
         customers
     )
 
+    explanation = explain_decision(result)
+
     if args.json:
         output = {
             "profit": result["profit"],
@@ -248,6 +323,7 @@ def main():
             "recommendation": result["recommendation"],
             "risk": result["risk"],
             "reasons": result["reasons"],
+            "explanation": explanation,
         }
 
         print(json.dumps(output, indent=2))
@@ -273,6 +349,18 @@ def main():
 
     for reason in result["reasons"]:
         print(reason)
+
+    print()
+    print("MAIN CONCERNS")
+
+    for concern in explanation["concerns"]:
+        print(f"! {concern}")
+
+    print()
+    print("RECOMMENDED ACTION")
+
+    for action in explanation["actions"]:
+        print(f"-> {action}")
 
     print("-" * 40)
 

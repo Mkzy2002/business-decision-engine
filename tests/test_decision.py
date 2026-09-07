@@ -112,3 +112,20 @@ def test_compare_scenarios():
     assert results[0]["score"] == 60
     assert results[1]["score"] == 55
     assert results[2]["score"] == 55
+def test_explain_decision():
+    from decision_engine import calculate_decision, explain_decision
+
+    result = calculate_decision(
+        revenue=20000,
+        expenses=8000,
+        cash=2500,
+        growth_rate=8,
+        customers=50
+    )
+
+    explanation = explain_decision(result)
+
+    assert "Business is profitable" in explanation["strengths"]
+    assert "Strong profit margin" in explanation["strengths"]
+    assert "Cash runway is critically low" in explanation["concerns"]
+    assert "Secure additional cash runway immediately" in explanation["actions"]
