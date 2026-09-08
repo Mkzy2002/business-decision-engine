@@ -1,5 +1,26 @@
 import argparse
 import json
+import math
+
+
+def make_json_safe(value):
+    if isinstance(value, float) and not math.isfinite(value):
+        return None
+
+    if isinstance(value, dict):
+        return {
+            key: make_json_safe(item)
+            for key, item in value.items()
+        }
+
+    if isinstance(value, list):
+        return [
+            make_json_safe(item)
+            for item in value
+        ]
+
+    return value
+
 def validate_business_inputs(
     revenue,
     expenses,
@@ -38,6 +59,7 @@ def validate_business_inputs(
         raise ValueError("customers must be a whole number")
 
     return True
+
 
 def calculate_decision(revenue, expenses, cash, growth_rate, customers):
     validate_business_inputs(
@@ -339,6 +361,42 @@ def get_best_decision(results):
 
 
 def compare_scenarios(scenarios):
+    if not isinstance(scenarios, list):
+        raise ValueError("scenarios must be a list")
+
+    if not scenarios:
+        raise ValueError("scenarios cannot be empty")
+
+    required_fields = {
+        "name",
+        "revenue",
+        "expenses",
+        "cash",
+        "growth",
+        "customers",
+    }
+
+    for index, scenario in enumerate(scenarios):
+        if not isinstance(scenario, dict):
+            raise ValueError(
+                f"scenario {index} must be an object"
+            )
+
+        missing_fields = required_fields - scenario.keys()
+
+        if missing_fields:
+            missing = ", ".join(sorted(missing_fields))
+            raise ValueError(
+                f"scenario {index} is missing fields: {missing}"
+            )
+
+    current_scenario = scenarios[0]
+
+    if current_scenario["name"].lower() != "current":
+        raise ValueError(
+            "first scenario must be named 'Current'"
+        )
+
     results = []
 
     for scenario in scenarios:
@@ -359,11 +417,7 @@ def compare_scenarios(scenarios):
             "_scenario": scenario,
         })
 
-    if not results:
-        return []
-
     current_result = results[0]
-    current_scenario = current_result["_scenario"]
 
     for result in results:
         quality = calculate_decision_quality(
@@ -390,13 +444,11 @@ def compare_scenarios(scenarios):
 
         del result["_scenario"]
 
-    ranked_results = sorted(
+    return sorted(
         results,
         key=lambda result: result["decision_score"],
-        reverse=True
+        reverse=True,
     )
-
-    return ranked_results
 
 
 def main():
@@ -432,7 +484,14 @@ def main():
         best_decision = get_best_decision(results)
 
         if args.json:
-            print(json.dumps(results, indent=2))
+            output = {
+                "results": results,
+                "best_decision": best_decision,
+            }
+
+            safe_output = make_json_safe(output)
+
+            print(json.dumps(safe_output, indent=2, allow_nan=False))
             return
 
         print()
@@ -582,7 +641,9 @@ def main():
             "explanation": explanation,
         }
 
-        print(json.dumps(output, indent=2))
+        safe_output = make_json_safe(output)
+
+        print(json.dumps(safe_output, indent=2, allow_nan=False))
         return
 
     print()
