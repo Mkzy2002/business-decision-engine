@@ -21,6 +21,7 @@ def make_json_safe(value):
 
     return value
 
+
 def validate_business_inputs(
     revenue,
     expenses,
@@ -61,7 +62,13 @@ def validate_business_inputs(
     return True
 
 
-def calculate_decision(revenue, expenses, cash, growth_rate, customers):
+def calculate_decision(
+    revenue,
+    expenses,
+    cash,
+    growth_rate,
+    customers,
+):
     validate_business_inputs(
         revenue=revenue,
         expenses=expenses,
@@ -338,7 +345,7 @@ def calculate_decision_score(
     elif margin_improvement > 0:
         decision_score += 2
 
-    return decision_score
+    return min(decision_score, 100)
 
 
 def get_best_decision(results):
@@ -356,7 +363,7 @@ def get_best_decision(results):
         "decision_quality": best_result["decision_quality"],
         "recommendation": best_result["recommendation"],
         "risk": best_result["risk"],
-        "reasons": best_result["explanation"]["actions"],
+        "actions": best_result["explanation"]["actions"],
     }
 
 
@@ -442,6 +449,11 @@ def compare_scenarios(scenarios):
             scenario_runway=result["runway"],
         )
 
+        result["decision_score"] = min(
+            result["decision_score"],
+            100,
+        )
+
         del result["_scenario"]
 
     return sorted(
@@ -502,14 +514,21 @@ def main():
         for index, result in enumerate(results, start=1):
             print()
             print(f"{index}. {result['name']}")
+
             print("   BUSINESS HEALTH")
             print(f"   Health Score:      {result['score']}/100")
             print(f"   Risk:              {result['risk']}")
 
             print()
             print("   SCENARIO DECISION")
-            print(f"   Decision Score:    {result['decision_score']}/100")
-            print(f"   Decision Quality:  {result['decision_quality']}")
+            print(
+                f"   Decision Score:    "
+                f"{result['decision_score']}/100"
+            )
+            print(
+                f"   Decision Quality:  "
+                f"{result['decision_quality']}"
+            )
 
             print()
             print("   RECOMMENDATION")
@@ -523,7 +542,10 @@ def main():
             if result["runway"] == float("inf"):
                 print("   Runway:         Unlimited")
             else:
-                print(f"   Runway:         {result['runway']:.1f} months")
+                print(
+                    f"   Runway:         "
+                    f"{result['runway']:.1f} months"
+                )
 
             print()
             print("   DECISION IMPACT:")
@@ -533,10 +555,13 @@ def main():
                 f"${result['profit_improvement']:,.2f}"
             )
 
-            print(
-                f"   Runway improvement:  "
-                f"{result['runway_improvement']:.2f} months"
-            )
+            if result["runway_improvement"] == float("inf"):
+                print("   Runway improvement:  Unlimited")
+            else:
+                print(
+                    f"   Runway improvement:  "
+                    f"{result['runway_improvement']:.2f} months"
+                )
 
             print(
                 f"   Margin improvement:  "
@@ -548,10 +573,13 @@ def main():
                 f"{result['growth_improvement']:.1f}%"
             )
 
-            print(
-                f"   Survival improvement:"
-                f" {result['survival_improvement']:.2f} months"
-            )
+            if result["survival_improvement"] == float("inf"):
+                print("   Survival improvement: Unlimited")
+            else:
+                print(
+                    f"   Survival improvement:"
+                    f" {result['survival_improvement']:.2f} months"
+                )
 
             print()
             print("   WHY:")
@@ -578,20 +606,32 @@ def main():
         print("=" * 50)
 
         print()
-        print(f"Recommended Scenario: {best_decision['name']}")
+        print(
+            f"Recommended Scenario: "
+            f"{best_decision['name']}"
+        )
 
         print()
         print("Scenario Score:")
         print(f"  {best_decision['decision_score']}/100")
 
-        print(f"Decision Quality: {best_decision['decision_quality']}")
-        print(f"Business Risk:    {best_decision['risk']}")
-        print(f"Recommendation:   {best_decision['recommendation']}")
+        print(
+            f"Decision Quality: "
+            f"{best_decision['decision_quality']}"
+        )
+        print(
+            f"Business Risk:    "
+            f"{best_decision['risk']}"
+        )
+        print(
+            f"Recommendation:   "
+            f"{best_decision['recommendation']}"
+        )
 
         print()
         print("ACTION:")
 
-        for action in best_decision["reasons"]:
+        for action in best_decision["actions"]:
             print(f"-> {action}")
 
         print("=" * 50)
@@ -634,7 +674,7 @@ def main():
         expenses,
         cash,
         growth_rate,
-        customers
+        customers,
     )
 
     explanation = explain_decision(result)
