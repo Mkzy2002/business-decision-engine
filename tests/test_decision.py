@@ -108,10 +108,14 @@ def test_compare_scenarios():
     results = compare_scenarios(scenarios)
 
     assert len(results) == 3
-    assert results[0]["name"] == "Increase Revenue"
-    assert results[0]["score"] == 60
-    assert results[1]["score"] == 55
-    assert results[2]["score"] == 55
+    assert results[0]["name"] == "Cut Expenses"
+    assert results[1]["name"] == "Increase Revenue"
+    assert results[2]["name"] == "Current"
+
+    assert results[0]["decision_score"] == 90
+    assert results[1]["decision_score"] == 60
+    assert results[2]["decision_score"] == 35
+
 def test_explain_decision():
     from decision_engine import calculate_decision, explain_decision
 
@@ -129,3 +133,86 @@ def test_explain_decision():
     assert "Strong profit margin" in explanation["strengths"]
     assert "Cash runway is critically low" in explanation["concerns"]
     assert "Secure additional cash runway immediately" in explanation["actions"]
+def test_decision_quality():
+    from decision_engine import calculate_decision, compare_scenarios
+
+    scenarios = [
+        {
+            "name": "Current",
+            "revenue": 20000,
+            "expenses": 8000,
+            "cash": 2500,
+            "growth": 8,
+            "customers": 50,
+        },
+        {
+            "name": "Cut Expenses",
+            "revenue": 20000,
+            "expenses": 5000,
+            "cash": 2500,
+            "growth": 8,
+            "customers": 50,
+        },
+    ]
+
+    results = compare_scenarios(scenarios)
+
+    assert "decision_quality" in results[0]
+    assert "survival_improvement" in results[0]
+    assert "profit_improvement" in results[0]
+    assert "runway_improvement" in results[0]
+def test_survival_override():
+    from decision_engine import apply_survival_override
+
+    score = apply_survival_override(
+        decision_score=80,
+        current_runway=0.3,
+        scenario_runway=0.3,
+    )
+
+    assert score == 60
+
+    improved_score = apply_survival_override(
+        decision_score=80,
+        current_runway=0.3,
+        scenario_runway=0.5,
+    )
+
+    assert improved_score == 90
+
+def test_get_best_decision():
+    from decision_engine import compare_scenarios, get_best_decision
+
+    scenarios = [
+        {
+            "name": "Current",
+            "revenue": 20000,
+            "expenses": 8000,
+            "cash": 2500,
+            "growth": 8,
+            "customers": 50,
+        },
+        {
+            "name": "Cut Expenses",
+            "revenue": 20000,
+            "expenses": 5000,
+            "cash": 2500,
+            "growth": 8,
+            "customers": 50,
+        },
+        {
+            "name": "Increase Revenue",
+            "revenue": 30000,
+            "expenses": 8000,
+            "cash": 2500,
+            "growth": 15,
+            "customers": 50,
+        },
+    ]
+
+    results = compare_scenarios(scenarios)
+    best = get_best_decision(results)
+
+    assert best["name"] == "Cut Expenses"
+    assert best["decision_score"] == 90
+    assert best["decision_quality"] == "HIGH"

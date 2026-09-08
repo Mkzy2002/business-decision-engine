@@ -144,9 +144,13 @@ def explain_decision(result):
     elif result["recommendation"] == "HOLD":
         actions.append("Hold the current direction and improve weak areas")
     elif result["recommendation"] == "PIVOT":
-        actions.append("Test a different business approach before committing more resources")
+        actions.append(
+            "Test a different business approach before committing more resources"
+        )
     elif result["recommendation"] == "CUT":
-        actions.append("Consider stopping or significantly reducing the current activity")
+        actions.append(
+            "Consider stopping or significantly reducing the current activity"
+        )
 
     if result["margin"] >= 30:
         strengths.append("Healthy unit economics")
@@ -170,6 +174,125 @@ def explain_decision(result):
     }
 
 
+def calculate_decision_quality(
+    current_result,
+    current_scenario,
+    scenario_result,
+    scenario,
+):
+    profit_improvement = (
+        scenario_result["profit"] - current_result["profit"]
+    )
+
+    margin_improvement = (
+        scenario_result["margin"] - current_result["margin"]
+    )
+
+    growth_improvement = (
+        scenario["growth"] - current_scenario["growth"]
+    )
+
+    if (
+        current_result["runway"] == float("inf")
+        and scenario_result["runway"] == float("inf")
+    ):
+        runway_improvement = 0
+    elif current_result["runway"] == float("inf"):
+        runway_improvement = 0
+    elif scenario_result["runway"] == float("inf"):
+        runway_improvement = float("inf")
+    else:
+        runway_improvement = (
+            scenario_result["runway"] - current_result["runway"]
+        )
+
+    survival_improvement = runway_improvement
+
+    if survival_improvement > 0:
+        decision_quality = "HIGH"
+    elif profit_improvement > 0 and margin_improvement >= 0:
+        decision_quality = "MEDIUM"
+    else:
+        decision_quality = "LOW"
+
+    return {
+        "profit_improvement": profit_improvement,
+        "runway_improvement": runway_improvement,
+        "margin_improvement": margin_improvement,
+        "growth_improvement": growth_improvement,
+        "survival_improvement": survival_improvement,
+        "decision_quality": decision_quality,
+    }
+
+
+def apply_survival_override(
+    decision_score,
+    current_runway,
+    scenario_runway,
+):
+    if current_runway < 1:
+        if scenario_runway <= current_runway:
+            decision_score -= 20
+        elif scenario_runway > current_runway:
+            decision_score += 10
+
+    return decision_score
+
+
+def calculate_decision_score(
+    health_score,
+    profit_improvement,
+    runway_improvement,
+    margin_improvement,
+):
+    decision_score = health_score
+
+    # Runway improvement: up to 25 points
+    if runway_improvement > 1:
+        decision_score += 25
+    elif runway_improvement > 0.5:
+        decision_score += 15
+    elif runway_improvement > 0.1:
+        decision_score += 10
+
+    # Profit improvement: up to 15 points
+    if profit_improvement > 10000:
+        decision_score += 15
+    elif profit_improvement > 5000:
+        decision_score += 10
+    elif profit_improvement > 0:
+        decision_score += 5
+
+    # Margin improvement: up to 10 points
+    if margin_improvement > 10:
+        decision_score += 10
+    elif margin_improvement > 5:
+        decision_score += 5
+    elif margin_improvement > 0:
+        decision_score += 2
+
+    return decision_score
+
+
+def get_best_decision(results):
+    if not results:
+        return None
+
+    best_result = max(
+        results,
+        key=lambda result: result["decision_score"]
+    )
+
+    return {
+        "name": best_result["name"],
+        "decision_score": best_result["decision_score"],
+        "decision_quality": best_result["decision_quality"],
+        "recommendation": best_result["recommendation"],
+        "risk": best_result["risk"],
+        "reasons": best_result["explanation"]["actions"],
+    }
+
+
 def compare_scenarios(scenarios):
     results = []
 
@@ -188,11 +311,43 @@ def compare_scenarios(scenarios):
             "name": scenario["name"],
             **result,
             "explanation": explanation,
+            "_scenario": scenario,
         })
+
+    if not results:
+        return []
+
+    current_result = results[0]
+    current_scenario = current_result["_scenario"]
+
+    for result in results:
+        quality = calculate_decision_quality(
+            current_result=current_result,
+            current_scenario=current_scenario,
+            scenario_result=result,
+            scenario=result["_scenario"],
+        )
+
+        result.update(quality)
+
+        base_decision_score = calculate_decision_score(
+            health_score=result["score"],
+            profit_improvement=result["profit_improvement"],
+            runway_improvement=result["runway_improvement"],
+            margin_improvement=result["margin_improvement"],
+        )
+
+        result["decision_score"] = apply_survival_override(
+            decision_score=base_decision_score,
+            current_runway=current_result["runway"],
+            scenario_runway=result["runway"],
+        )
+
+        del result["_scenario"]
 
     ranked_results = sorted(
         results,
-        key=lambda result: result["score"],
+        key=lambda result: result["decision_score"],
         reverse=True
     )
 
@@ -229,6 +384,7 @@ def main():
             scenarios = json.load(file)
 
         results = compare_scenarios(scenarios)
+        best_decision = get_best_decision(results)
 
         if args.json:
             print(json.dumps(results, indent=2))
@@ -243,6 +399,7 @@ def main():
             print()
             print(f"{index}. {result['name']}")
             print(f"   Score:          {result['score']}/100")
+            print(f"   Decision Score:  {result['decision_score']}")
             print(f"   Recommendation: {result['recommendation']}")
             print(f"   Risk:           {result['risk']}")
             print(f"   Profit:         ${result['profit']:,.2f}")
@@ -254,21 +411,75 @@ def main():
                 print(f"   Runway:         {result['runway']:.1f} months")
 
             print()
+            print("   DECISION IMPACT:")
+
+            print(
+                f"   Profit improvement:  "
+                f"${result['profit_improvement']:,.2f}"
+            )
+
+            print(
+                f"   Runway improvement:  "
+                f"{result['runway_improvement']:.2f} months"
+            )
+
+            print(
+                f"   Margin improvement:  "
+                f"{result['margin_improvement']:.1f}%"
+            )
+
+            print(
+                f"   Growth improvement:  "
+                f"{result['growth_improvement']:.1f}%"
+            )
+
+            print(
+                f"   Survival improvement:"
+                f" {result['survival_improvement']:.2f} months"
+            )
+
+            print(
+                f"   Decision quality:    "
+                f"{result['decision_quality']}"
+            )
+
+            print()
             print("   WHY:")
+
             for strength in result["explanation"]["strengths"]:
                 print(f"   + {strength}")
 
             print()
             print("   MAIN CONCERNS:")
+
             for concern in result["explanation"]["concerns"]:
                 print(f"   ! {concern}")
 
             print()
             print("   ACTION:")
+
             for action in result["explanation"]["actions"]:
                 print(f"   -> {action}")
 
+            print()
+
+        print("=" * 50)
+        print("              BEST DECISION")
+        print("=" * 50)
+
         print()
+        print(f"Recommended Scenario: {best_decision['name']}")
+        print(f"Decision Score:       {best_decision['decision_score']}/100")
+        print(f"Decision Quality:     {best_decision['decision_quality']}")
+        print(f"Recommendation:       {best_decision['recommendation']}")
+        print(f"Risk:                 {best_decision['risk']}")
+
+        print()
+        print("ACTION:")
+
+        for action in best_decision["reasons"]:
+            print(f"-> {action}")
+
         print("=" * 50)
         return
 
