@@ -502,10 +502,21 @@ def main():
         for index, result in enumerate(results, start=1):
             print()
             print(f"{index}. {result['name']}")
-            print(f"   Score:          {result['score']}/100")
-            print(f"   Decision Score:  {result['decision_score']}")
-            print(f"   Recommendation: {result['recommendation']}")
-            print(f"   Risk:           {result['risk']}")
+            print("   BUSINESS HEALTH")
+            print(f"   Health Score:      {result['score']}/100")
+            print(f"   Risk:              {result['risk']}")
+
+            print()
+            print("   SCENARIO DECISION")
+            print(f"   Decision Score:    {result['decision_score']}/100")
+            print(f"   Decision Quality:  {result['decision_quality']}")
+
+            print()
+            print("   RECOMMENDATION")
+            print(f"   {result['recommendation']}")
+
+            print()
+            print("   FINANCIAL METRICS")
             print(f"   Profit:         ${result['profit']:,.2f}")
             print(f"   Margin:         {result['margin']:.1f}%")
 
@@ -542,11 +553,6 @@ def main():
                 f" {result['survival_improvement']:.2f} months"
             )
 
-            print(
-                f"   Decision quality:    "
-                f"{result['decision_quality']}"
-            )
-
             print()
             print("   WHY:")
 
@@ -573,10 +579,14 @@ def main():
 
         print()
         print(f"Recommended Scenario: {best_decision['name']}")
-        print(f"Decision Score:       {best_decision['decision_score']}/100")
-        print(f"Decision Quality:     {best_decision['decision_quality']}")
-        print(f"Recommendation:       {best_decision['recommendation']}")
-        print(f"Risk:                 {best_decision['risk']}")
+
+        print()
+        print("Scenario Score:")
+        print(f"  {best_decision['decision_score']}/100")
+
+        print(f"Decision Quality: {best_decision['decision_quality']}")
+        print(f"Business Risk:    {best_decision['risk']}")
+        print(f"Recommendation:   {best_decision['recommendation']}")
 
         print()
         print("ACTION:")
