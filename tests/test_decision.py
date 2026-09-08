@@ -1,4 +1,6 @@
-from decision_engine import calculate_decision
+import pytest
+
+from decision_engine import calculate_decision, compare_scenarios
 
 
 def test_profitable_business():
@@ -232,8 +234,6 @@ def test_validate_business_inputs():
 def test_validate_business_inputs_rejects_negative_revenue():
     from decision_engine import validate_business_inputs
 
-    import pytest
-
     with pytest.raises(ValueError):
         validate_business_inputs(
             revenue=-1,
@@ -247,7 +247,6 @@ def test_validate_business_inputs_rejects_negative_revenue():
 def test_validate_business_inputs_rejects_negative_cash():
     from decision_engine import validate_business_inputs
 
-    import pytest
 
     with pytest.raises(ValueError):
         validate_business_inputs(
@@ -262,7 +261,6 @@ def test_validate_business_inputs_rejects_negative_cash():
 def test_validate_business_inputs_rejects_negative_customers():
     from decision_engine import validate_business_inputs
 
-    import pytest
 
     with pytest.raises(ValueError):
         validate_business_inputs(
@@ -272,3 +270,58 @@ def test_validate_business_inputs_rejects_negative_customers():
             growth_rate=8,
             customers=-1,
         )
+
+
+def test_compare_scenarios_rejects_empty_list():
+    with pytest.raises(ValueError, match="scenarios cannot be empty"):
+        compare_scenarios([])
+
+
+def test_compare_scenarios_rejects_non_list():
+    with pytest.raises(ValueError, match="scenarios must be a list"):
+        compare_scenarios({})
+
+
+def test_compare_scenarios_rejects_missing_fields():
+    scenarios = [
+        {
+            "name": "Current",
+            "revenue": 10000,
+            "expenses": 5000,
+            "cash": 3000,
+        }
+    ]
+
+    with pytest.raises(ValueError, match="missing fields"):
+        compare_scenarios(scenarios)
+
+
+def test_compare_scenarios_requires_current_baseline():
+    scenarios = [
+        {
+            "name": "Starting Point",
+            "revenue": 10000,
+            "expenses": 5000,
+            "cash": 3000,
+            "growth": 10,
+            "customers": 20,
+        }
+    ]
+
+    with pytest.raises(
+        ValueError,
+        match="first scenario must be named 'Current'",
+    ):
+        compare_scenarios(scenarios)
+
+
+def test_compare_scenarios_rejects_non_object_scenario():
+    scenarios = [
+        "not a scenario"
+    ]
+
+    with pytest.raises(
+        ValueError,
+        match="scenario 0 must be an object",
+    ):
+        compare_scenarios(scenarios)
