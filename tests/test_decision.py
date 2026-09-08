@@ -216,3 +216,59 @@ def test_get_best_decision():
     assert best["name"] == "Cut Expenses"
     assert best["decision_score"] == 90
     assert best["decision_quality"] == "HIGH"
+
+def test_validate_business_inputs():
+    from decision_engine import validate_business_inputs
+
+    assert validate_business_inputs(
+        revenue=20000,
+        expenses=8000,
+        cash=2500,
+        growth_rate=8,
+        customers=50,
+    ) is True
+
+
+def test_validate_business_inputs_rejects_negative_revenue():
+    from decision_engine import validate_business_inputs
+
+    import pytest
+
+    with pytest.raises(ValueError):
+        validate_business_inputs(
+            revenue=-1,
+            expenses=8000,
+            cash=2500,
+            growth_rate=8,
+            customers=50,
+        )
+
+
+def test_validate_business_inputs_rejects_negative_cash():
+    from decision_engine import validate_business_inputs
+
+    import pytest
+
+    with pytest.raises(ValueError):
+        validate_business_inputs(
+            revenue=20000,
+            expenses=8000,
+            cash=-1,
+            growth_rate=8,
+            customers=50,
+        )
+
+
+def test_validate_business_inputs_rejects_negative_customers():
+    from decision_engine import validate_business_inputs
+
+    import pytest
+
+    with pytest.raises(ValueError):
+        validate_business_inputs(
+            revenue=20000,
+            expenses=8000,
+            cash=2500,
+            growth_rate=8,
+            customers=-1,
+        )

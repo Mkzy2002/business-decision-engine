@@ -1,8 +1,53 @@
 import argparse
 import json
+def validate_business_inputs(
+    revenue,
+    expenses,
+    cash,
+    growth_rate,
+    customers,
+):
+    values = {
+        "revenue": revenue,
+        "expenses": expenses,
+        "cash": cash,
+        "growth_rate": growth_rate,
+        "customers": customers,
+    }
 
+    for name, value in values.items():
+        if not isinstance(value, (int, float)):
+            raise ValueError(f"{name} must be a number")
+
+    if revenue < 0:
+        raise ValueError("revenue cannot be negative")
+
+    if expenses < 0:
+        raise ValueError("expenses cannot be negative")
+
+    if cash < 0:
+        raise ValueError("cash cannot be negative")
+
+    if growth_rate < -100:
+        raise ValueError("growth_rate cannot be below -100")
+
+    if customers < 0:
+        raise ValueError("customers cannot be negative")
+
+    if not float(customers).is_integer():
+        raise ValueError("customers must be a whole number")
+
+    return True
 
 def calculate_decision(revenue, expenses, cash, growth_rate, customers):
+    validate_business_inputs(
+        revenue=revenue,
+        expenses=expenses,
+        cash=cash,
+        growth_rate=growth_rate,
+        customers=customers,
+    )
+
     monthly_profit = revenue - expenses
 
     if revenue > 0:
