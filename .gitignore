@@ -1,16 +1,47 @@
-__pycache__/
+# Python cache
+
+**pycache**/
+*.py[cod]
+*$py.class
+
+# Pytest
+
+.pytest_cache/
+
+# Streamlit
+
+.streamlit/
+
+# Virtual environments
+
+.venv/
+venv/
+env/
+ENV/
+
+# IDE / editor files
+
+.vscode/
+.idea/
+
+# Operating system files
+
+.DS_Store
+Thumbs.db
+
+# Local environment files
+
+.env
+.env.*
+
+# Local development backups
+
 decision_engine_v01_backup.py
-
-decision_engine_v04_backup.py
-
-decision_engine_v05_backup.py
-
 decision_engine_v02_backup.py
-
 decision_engine_v03_backup.py
-
+decision_engine_v04_backup.py
+decision_engine_v05_backup.py
 decision_engine_v06_backup.py
-
 decision_engine_v07_backup.py
-
 decision_engine_v075_backup.py
+decision_engine_v*_backup.py
